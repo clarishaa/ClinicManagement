@@ -19,12 +19,12 @@ public class CreateAccountForm extends JFrame {
     public CreateAccountForm() {
         setTitle("Create Account - CleanSmile Dental Clinic");
         setSize(792, 576); // Set the size to 11x8 inches in pixels
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setUndecorated(true);
         setShape(new RoundRectangle2D.Double(0, 0, 792, 576, 20, 20));
         setBackground(new Color(0, 0, 0, 0));
-
+        setLocationRelativeTo(null);
         // Main panel
         JPanel mainPanel = new JPanel() {
             @Override

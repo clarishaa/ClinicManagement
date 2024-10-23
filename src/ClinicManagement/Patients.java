@@ -28,14 +28,14 @@ public class Patients extends JFrame {
 
     public Patients() {
         setTitle("Patient Management");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setBounds(100, 100, 800, 600);
 
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
         setContentPane(contentPane);
         contentPane.setLayout(new BorderLayout());
-
+        setLocationRelativeTo(null);
         // Create table model
         tableModel = new DefaultTableModel(new Object[]{"ID", "First Name", "Last Name", "Gender", "Birthdate"}, 0);
         table = new JTable(tableModel);

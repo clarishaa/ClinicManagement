@@ -6,23 +6,26 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.sql.*;
-import java.util.ArrayList;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class Treatments extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
-    private JTextField txtTreatmentType;
-    private JSpinner dateSpinner; // Spinner for date selection
-    private JTextArea txtNotes; // Text area for notes
-    private JTable tableTreatments;
-    private DefaultTableModel tableModel;
-    private JComboBox<String> cbPatientName; // Dropdown for patient names
-    private JButton btnSave, btnUpdate, btnDelete;
-    
-    private Connection connection; // Database connection
+    private JTable treatmentTable;
+    private DefaultTableModel treatmentTableModel;
+
+    // Define treatment types and their corresponding fixed billing amounts
+    private static final String[][] TREATMENT_TYPES = {
+        {"Consultation", "100"},
+        {"Filling", "300"},
+        {"Cleaning", "200"},
+        {"Extraction", "400"},
+        // Add more treatment types as needed
+    };
+
+    // Dropdown for users
+    private JComboBox<String> userDropdown;
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
@@ -36,210 +39,401 @@ public class Treatments extends JFrame {
     }
 
     public Treatments() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 600, 400);
+        setTitle("Treatment Management");
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setBounds(100, 100, 800, 600);
+        setLocationRelativeTo(null);
+
         contentPane = new JPanel();
-        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
         setContentPane(contentPane);
         contentPane.setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
-        // Top panel for input fields
-        JPanel panelInputs = new JPanel();
-        contentPane.add(panelInputs, BorderLayout.NORTH);
-        panelInputs.setLayout(new GridLayout(4, 2));
+        // Treatment Table with Billing Info
+        treatmentTableModel = new DefaultTableModel(new Object[]{"ID", "User ID", "Treatment Type", "Treatment Date", "Notes", "Amount", "Status"}, 0);
+        treatmentTable = new JTable(treatmentTableModel);
+        contentPane.add(new JScrollPane(treatmentTable), BorderLayout.CENTER);
 
-        panelInputs.add(new JLabel("Patient Name:"));
-        cbPatientName = new JComboBox<>(loadPatientNames()); // Load patient names from the database
-        panelInputs.add(cbPatientName);
+        loadTreatmentData();
 
-        panelInputs.add(new JLabel("Treatment Type:"));
-        txtTreatmentType = new JTextField();
-        panelInputs.add(txtTreatmentType);
+        // Create a panel for buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+        contentPane.add(buttonPanel, BorderLayout.SOUTH);
 
-        panelInputs.add(new JLabel("Treatment Date:"));
-        dateSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor editor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
-        dateSpinner.setEditor(editor);
-        dateSpinner.setValue(new Date()); // Set current date
-        panelInputs.add(dateSpinner);
+        JButton addButton = createButton("Add Treatment", e -> showTreatmentDialog(null));
+        buttonPanel.add(addButton);
 
-        panelInputs.add(new JLabel("Notes:"));
-        txtNotes = new JTextArea(3, 20);
-        panelInputs.add(new JScrollPane(txtNotes));
+        JButton editButton = createButton("Edit Treatment", e -> editSelectedTreatment());
+        buttonPanel.add(editButton);
 
-        // Buttons for CRUD operations
-        btnSave = new JButton("Save");
-        btnUpdate = new JButton("Update");
-        btnDelete = new JButton("Delete");
-        JPanel panelButtons = new JPanel();
-        panelButtons.add(btnSave);
-        panelButtons.add(btnUpdate);
-        panelButtons.add(btnDelete);
-        contentPane.add(panelButtons, BorderLayout.SOUTH);
-
-        // Table for displaying treatments
-        tableModel = new DefaultTableModel(new String[]{"ID", "Patient Name", "Treatment Type", "Treatment Date", "Notes"}, 0);
-        tableTreatments = new JTable(tableModel);
-        contentPane.add(new JScrollPane(tableTreatments), BorderLayout.CENTER);
-
-        btnSave.addActionListener(e -> saveTreatment());
-        btnUpdate.addActionListener(e -> updateTreatment());
-        btnDelete.addActionListener(e -> deleteTreatment());
-
-        loadTreatments(); // Load treatments when the frame is initialized
+        JButton deleteButton = createButton("Delete Treatment", e -> deleteSelectedTreatment());
+        buttonPanel.add(deleteButton);
+        
+        // Load user dropdown
+        loadUserDropdown();
     }
 
-    private String[] loadPatientNames() {
-        ArrayList<String> patientNames = new ArrayList<>();
-        // Load patient names from the database
-        try {
-            connection = DatabaseConnection.getConnection(); // Implement this method to establish DB connection
-            String sql = "SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users WHERE user_type = 'patient'";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
-                patientNames.add(rs.getString("full_name"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showError("Error loading patient names: " + e.getMessage());
-        }
-        return patientNames.toArray(new String[0]);
+    private JButton createButton(String text, ActionListener actionListener) {
+        JButton button = new JButton(text);
+        button.addActionListener(actionListener);
+        return button;
     }
 
-    private void loadTreatments() {
-        try {
-            tableModel.setRowCount(0); // Clear existing rows
-            String sql = "SELECT t.id, CONCAT(u.first_name, ' ', u.last_name) AS patient_name, t.treatment_type, t.treatment_date, t.notes FROM treatments t JOIN users u ON t.user_id = u.id";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+    private void loadTreatmentData() {
+        String query = "SELECT t.id, t.user_id, t.treatment_type, t.treatment_date, t.notes, " +
+                       "b.amount, b.status " +
+                       "FROM treatments t LEFT JOIN billing b ON t.id = b.treatment_id";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            treatmentTableModel.setRowCount(0);
             while (rs.next()) {
-                tableModel.addRow(new Object[]{
-                        rs.getInt("id"),
-                        rs.getString("patient_name"),
-                        rs.getString("treatment_type"),
-                        rs.getDate("treatment_date"),
-                        rs.getString("notes")
+                treatmentTableModel.addRow(new Object[]{
+                    rs.getInt("id"),
+                    rs.getInt("user_id"),
+                    rs.getString("treatment_type"),
+                    rs.getDate("treatment_date"),
+                    rs.getString("notes"),
+                    rs.getInt("amount"),
+                    rs.getString("status")
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            showError("Error loading treatments: " + e.getMessage());
+            showError("Failed to load treatment data: " + e.getMessage());
         }
     }
 
-    private void saveTreatment() {
-        String treatmentType = txtTreatmentType.getText().trim();
-        Date treatmentDate = (Date) dateSpinner.getValue();
-        String notes = txtNotes.getText().trim();
-        String patientName = (String) cbPatientName.getSelectedItem();
-        
-        // Assuming you have a method to get user_id based on patient name
-        Integer patientId = getUserIdByName(patientName);
+    private void loadUserDropdown() {
+        userDropdown = new JComboBox<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT id, first_name, last_name FROM users WHERE user_type = 'patient'")) {
 
-        if (treatmentType.isEmpty() || notes.isEmpty()) {
-            showWarning("Please fill in all fields.");
-            return;
-        }
-
-        try {
-            String sql = "INSERT INTO treatments (user_id, treatment_type, treatment_date, notes) VALUES (?, ?, ?, ?)";
-            PreparedStatement pstmt = connection.prepareStatement(sql);
-            pstmt.setInt(1, patientId);
-            pstmt.setString(2, treatmentType);
-            pstmt.setDate(3, new java.sql.Date(treatmentDate.getTime()));
-            pstmt.setString(4, notes);
-            pstmt.executeUpdate();
-            loadTreatments(); // Refresh table
-            showInfo("Treatment saved successfully.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showError("Error saving treatment: " + e.getMessage());
-        }
-    }
-
-    private Integer getUserIdByName(String fullName) {
-        Integer userId = null;
-        try {
-            String sql = "SELECT id FROM users WHERE CONCAT(first_name, ' ', last_name) = ?";
-            PreparedStatement pstmt = connection.prepareStatement(sql);
-            pstmt.setString(1, fullName);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                userId = rs.getInt("id");
+            while (rs.next()) {
+                String fullName = rs.getString("first_name") + " " + rs.getString("last_name");
+                userDropdown.addItem(rs.getInt("id") + " - " + fullName);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            showError("Failed to load users: " + e.getMessage());
         }
-        return userId;
     }
 
-    private void updateTreatment() {
-        int selectedRow = tableTreatments.getSelectedRow();
-        if (selectedRow == -1) {
-            showWarning("Please select a treatment to update.");
-            return;
+    private void showTreatmentDialog(Treatment treatment) {
+        JDialog dialog = new JDialog(this, treatment == null ? "Add Treatment" : "Edit Treatment", true);
+        dialog.getContentPane().setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10); // Add padding around components
+
+        JComboBox<String> treatmentTypeDropdown = new JComboBox<>();
+        for (String[] treatmentType : TREATMENT_TYPES) {
+            treatmentTypeDropdown.addItem(treatmentType[0]);
         }
 
-        Integer id = (Integer) tableModel.getValueAt(selectedRow, 0);
-        String treatmentType = txtTreatmentType.getText().trim();
-        Date treatmentDate = (Date) dateSpinner.getValue();
-        String notes = txtNotes.getText().trim();
-        String patientName = (String) cbPatientName.getSelectedItem();
-        Integer patientId = getUserIdByName(patientName);
+        JSpinner treatmentDateSpinner = new JSpinner(new SpinnerDateModel());
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(treatmentDateSpinner, "yyyy-MM-dd");
+        treatmentDateSpinner.setEditor(dateEditor);
+        
+        JTextArea notesField = new JTextArea(3, 20);
+        notesField.setLineWrap(true);
+        notesField.setWrapStyleWord(true);
 
-        if (treatmentType.isEmpty() || notes.isEmpty()) {
-            showWarning("Please fill in all fields.");
-            return;
+        // Billing Info
+        JLabel amountLabel = new JLabel("Amount: 0"); // Initialize with a default value
+        JLabel statusLabel = new JLabel();
+
+        // Populate fields if editing an existing treatment
+        if (treatment != null) {
+            String fullName = getFullName(treatment.getUserId());
+            userDropdown.setSelectedItem(treatment.getUserId() + " - " + fullName);
+            treatmentTypeDropdown.setSelectedItem(treatment.getTreatmentType());
+            treatmentDateSpinner.setValue(treatment.getTreatmentDate());
+            notesField.setText(treatment.getNotes());
+
+            // Retrieve billing information
+            amountLabel.setText("Amount: " + getBillingAmount(treatment.getId()));
+            statusLabel.setText("Status: " + getBillingStatus(treatment.getId()));
         }
 
-        try {
-            String sql = "UPDATE treatments SET user_id = ?, treatment_type = ?, treatment_date = ?, notes = ? WHERE id = ?";
-            PreparedStatement pstmt = connection.prepareStatement(sql);
-            pstmt.setInt(1, patientId);
+        // Add listeners to update the amount automatically
+        treatmentTypeDropdown.addActionListener(e -> updateAmountLabel(amountLabel, treatmentTypeDropdown, treatmentDateSpinner, treatment));
+        ((JSpinner.DefaultEditor) treatmentDateSpinner.getEditor()).getTextField().addActionListener(e -> updateAmountLabel(amountLabel, treatmentTypeDropdown, treatmentDateSpinner, treatment));
+
+        // Add components to dialog
+        gbc.gridx = 0; gbc.gridy = 0; dialog.getContentPane().add(new JLabel("User:"), gbc);
+        gbc.gridx = 1; dialog.getContentPane().add(userDropdown, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 1; dialog.getContentPane().add(new JLabel("Treatment Type:"), gbc);
+        gbc.gridx = 1; dialog.getContentPane().add(treatmentTypeDropdown, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 2; dialog.getContentPane().add(new JLabel("Treatment Date:"), gbc);
+        gbc.gridx = 1; dialog.getContentPane().add(treatmentDateSpinner, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3; dialog.getContentPane().add(new JLabel("Notes:"), gbc);
+        gbc.gridx = 1; dialog.getContentPane().add(new JScrollPane(notesField), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 4; dialog.getContentPane().add(amountLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = 5; dialog.getContentPane().add(statusLabel, gbc);
+
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(e -> {
+            String selectedUser = (String) userDropdown.getSelectedItem();
+            String selectedTreatmentType = (String) treatmentTypeDropdown.getSelectedItem();
+            String treatmentDate = new SimpleDateFormat("yyyy-MM-dd").format(treatmentDateSpinner.getValue());
+            String notes = notesField.getText().trim();
+
+            if (selectedUser == null || selectedTreatmentType == null || treatmentDate.isEmpty() || notes.isEmpty()) {
+                showError("All fields are required! Please fill in all fields.");
+                return; // Exit the method if validation fails
+            }
+
+            int userId = Integer.parseInt(selectedUser.split(" - ")[0]);
+
+            if (treatment == null) {
+                addTreatment(userId, selectedTreatmentType, treatmentDate, notes);
+            } else {
+                updateTreatment(treatment.getId(), userId, selectedTreatmentType, treatmentDate, notes);
+            }
+            dialog.dispose();
+        });
+
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER; // Center the button
+        dialog.getContentPane().add(saveButton, gbc);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    // Method to update the amount label based on the selected treatment type and date
+    private void updateAmountLabel(JLabel amountLabel, JComboBox<String> treatmentTypeDropdown, JSpinner treatmentDateSpinner, Treatment treatment) {
+        // Assuming getBillingAmount can take treatment type and date
+        String selectedTreatmentType = (String) treatmentTypeDropdown.getSelectedItem();
+        String treatmentDate = new SimpleDateFormat("yyyy-MM-dd").format(treatmentDateSpinner.getValue());
+        
+        // Update amount label
+        int amount = getBillingAmount(selectedTreatmentType, treatmentDate); // Implement this method accordingly
+        amountLabel.setText("Amount: " + amount);
+    }
+
+    private int getBillingAmount(String selectedTreatmentType, String treatmentDate) {
+        // Iterate over treatment types to find the corresponding amount
+        for (String[] treatment : TREATMENT_TYPES) {
+            if (treatment[0].equals(selectedTreatmentType)) {
+                return Integer.parseInt(treatment[1]); // Return the corresponding amount
+            }
+        }
+        return 0; // Return 0 if the treatment type is not found
+    }
+
+
+	private String getFullName(int userId) {
+        String fullName = null;
+        String query = "SELECT first_name, last_name FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    fullName = rs.getString("first_name") + " " + rs.getString("last_name");
+                }
+            }
+        } catch (SQLException e) {
+            showError("Failed to retrieve user name: " + e.getMessage());
+        }
+        return fullName;
+    }
+
+    private void addTreatment(int userId, String treatmentType, String treatmentDate, String notes) {
+        String query = "INSERT INTO treatments (user_id, treatment_type, treatment_date, notes) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setInt(1, userId);
             pstmt.setString(2, treatmentType);
-            pstmt.setDate(3, new java.sql.Date(treatmentDate.getTime()));
+            pstmt.setDate(3, Date.valueOf(treatmentDate));
             pstmt.setString(4, notes);
-            pstmt.setInt(5, id);
             pstmt.executeUpdate();
-            loadTreatments(); // Refresh table
-            showInfo("Treatment updated successfully.");
+
+            // Get the generated treatment ID
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int treatmentId = generatedKeys.getInt(1);
+                    addBilling(treatmentId, treatmentType);
+                }
+            }
+            loadTreatmentData(); // Refresh the table
         } catch (SQLException e) {
-            e.printStackTrace();
-            showError("Error updating treatment: " + e.getMessage());
+            showError("Failed to add treatment: " + e.getMessage());
         }
     }
 
-    private void deleteTreatment() {
-        int selectedRow = tableTreatments.getSelectedRow();
-        if (selectedRow == -1) {
-            showWarning("Please select a treatment to delete.");
-            return;
+    private void addBilling(int treatmentId, String treatmentType) {
+        for (String[] treatment : TREATMENT_TYPES) {
+            if (treatment[0].equals(treatmentType)) {
+                String query = "INSERT INTO billing (treatment_id, amount, status) VALUES (?, ?, 'Pending')";
+                try (Connection conn = DatabaseConnection.getConnection();
+                     PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.setInt(1, treatmentId);
+                    pstmt.setInt(2, Integer.parseInt(treatment[1]));
+                    pstmt.executeUpdate();
+                } catch (SQLException e) {
+                    showError("Failed to add billing: " + e.getMessage());
+                }
+                break;
+            }
         }
+    }
 
-        Integer id = (Integer) tableModel.getValueAt(selectedRow, 0);
-        try {
-            String sql = "DELETE FROM treatments WHERE id = ?";
-            PreparedStatement pstmt = connection.prepareStatement(sql);
-            pstmt.setInt(1, id);
+    private void updateTreatment(int treatmentId, int userId, String treatmentType, String treatmentDate, String notes) {
+        String query = "UPDATE treatments SET user_id = ?, treatment_type = ?, treatment_date = ?, notes = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setString(2, treatmentType);
+            pstmt.setDate(3, Date.valueOf(treatmentDate));
+            pstmt.setString(4, notes);
+            pstmt.setInt(5, treatmentId);
             pstmt.executeUpdate();
-            loadTreatments(); // Refresh table
-            showInfo("Treatment deleted successfully.");
+
+            // Update billing if necessary
+            updateBilling(treatmentId, treatmentType);
+            loadTreatmentData(); // Refresh the table
         } catch (SQLException e) {
-            e.printStackTrace();
-            showError("Error deleting treatment: " + e.getMessage());
+            showError("Failed to update treatment: " + e.getMessage());
         }
+    }
+
+    private void updateBilling(int treatmentId, String treatmentType) {
+        for (String[] treatment : TREATMENT_TYPES) {
+            if (treatment[0].equals(treatmentType)) {
+                String query = "UPDATE billing SET amount = ? WHERE treatment_id = ?";
+                try (Connection conn = DatabaseConnection.getConnection();
+                     PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.setInt(1, Integer.parseInt(treatment[1]));
+                    pstmt.setInt(2, treatmentId);
+                    pstmt.executeUpdate();
+                } catch (SQLException e) {
+                    showError("Failed to update billing: " + e.getMessage());
+                }
+                break;
+            }
+        }
+    }
+
+    private void editSelectedTreatment() {
+        int selectedRow = treatmentTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int treatmentId = (int) treatmentTableModel.getValueAt(selectedRow, 0);
+            int userId = (int) treatmentTableModel.getValueAt(selectedRow, 1);
+            String treatmentType = (String) treatmentTableModel.getValueAt(selectedRow, 2);
+            Date treatmentDate = (Date) treatmentTableModel.getValueAt(selectedRow, 3);
+            String notes = (String) treatmentTableModel.getValueAt(selectedRow, 4);
+
+            Treatment treatment = new Treatment(treatmentId, userId, treatmentType, treatmentDate, notes);
+            showTreatmentDialog(treatment);
+        } else {
+            showError("Please select a treatment to edit.");
+        }
+    }
+
+    private void deleteSelectedTreatment() {
+        int selectedRow = treatmentTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int treatmentId = (int) treatmentTableModel.getValueAt(selectedRow, 0);
+            String query = "DELETE FROM treatments WHERE id = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+                pstmt.setInt(1, treatmentId);
+                pstmt.executeUpdate();
+                loadTreatmentData(); // Refresh the table
+            } catch (SQLException e) {
+                showError("Failed to delete treatment: " + e.getMessage());
+            }
+        } else {
+            showError("Please select a treatment to delete.");
+        }
+    }
+
+    private String getBillingAmount(int treatmentId) {
+        String amount = "0";
+        String query = "SELECT amount FROM billing WHERE treatment_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, treatmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    amount = String.valueOf(rs.getInt("amount"));
+                }
+            }
+        } catch (SQLException e) {
+            showError("Failed to retrieve billing amount: " + e.getMessage());
+        }
+        return amount;
+    }
+
+    private String getBillingStatus(int treatmentId) {
+        String status = "N/A";
+        String query = "SELECT status FROM billing WHERE treatment_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, treatmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    status = rs.getString("status");
+                }
+            }
+        } catch (SQLException e) {
+            showError("Failed to retrieve billing status: " + e.getMessage());
+        }
+        return status;
     }
 
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
+}
 
-    private void showWarning(String message) {
-        JOptionPane.showMessageDialog(this, message, "Warning", JOptionPane.WARNING_MESSAGE);
+class Treatment {
+    private int id;
+    private int userId;
+    private String treatmentType;
+    private Date treatmentDate;
+    private String notes;
+
+    public Treatment(int id, int userId, String treatmentType, Date treatmentDate, String notes) {
+        this.id = id;
+        this.userId = userId;
+        this.treatmentType = treatmentType;
+        this.treatmentDate = treatmentDate;
+        this.notes = notes;
     }
 
-    private void showInfo(String message) {
-        JOptionPane.showMessageDialog(this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
+    public int getId() {
+        return id;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getTreatmentType() {
+        return treatmentType;
+    }
+
+    public Date getTreatmentDate() {
+        return treatmentDate;
+    }
+
+    public String getNotes() {
+        return notes;
     }
 }

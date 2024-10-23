@@ -14,18 +14,18 @@ public class AppointmentManagementSystem extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JTable appointmentTable;
     private DefaultTableModel tableModel;
-    private JButton addButton, editButton, deleteButton, refreshButton;
+    private JButton addButton, editButton, deleteButton, refreshButton, dashboardButton;
     private Connection connection;
 
     public AppointmentManagementSystem() {
         setTitle("Appointment Management System - CleanSmile Dental Clinic");
         setSize(1024, 768);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setUndecorated(true);
         setShape(new RoundRectangle2D.Double(0, 0, 1024, 768, 20, 20));
         setBackground(new Color(0, 0, 0, 0));
-
+        setLocationRelativeTo(null);
         // Initialize database connection
         try {
             connection = DatabaseConnection.getConnection();
@@ -88,11 +88,13 @@ public class AppointmentManagementSystem extends JFrame {
         editButton = createStyledButton("Edit Appointment", new Color(0, 102, 204));
         deleteButton = createStyledButton("Delete Appointment", new Color(204, 0, 0));
         refreshButton = createStyledButton("Refresh", new Color(102, 102, 102));
+        dashboardButton = createStyledButton("Dashboard", new Color(102, 102, 102));
 
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(refreshButton);
+        buttonPanel.add(dashboardButton);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -101,10 +103,15 @@ public class AppointmentManagementSystem extends JFrame {
         editButton.addActionListener(e -> editSelectedAppointment());
         deleteButton.addActionListener(e -> deleteSelectedAppointment());
         refreshButton.addActionListener(e -> loadAppointments());
+        dashboardButton.addActionListener(e -> openDashboard());
 
         return mainPanel;
     }
-
+    private void openDashboard() {
+        // Create an instance of your Dashboard class
+        Main main = new Main();
+        main.setVisible(true); // Show the dashboard
+    }
     private JButton createStyledButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 14));

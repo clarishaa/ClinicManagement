@@ -20,12 +20,12 @@ public class LoginForm extends JFrame {
     public LoginForm() {
         setTitle("CleanSmile Dental Clinic - Login");
         setSize(792, 576); // Set size to 11x8 inches in pixels
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setUndecorated(true);
         setShape(new RoundRectangle2D.Double(0, 0, 792, 576, 20, 20));
         setBackground(new Color(0, 0, 0, 0));
-
+        setLocationRelativeTo(null);
         // Initialize database connection
         try {
             connection = DatabaseConnection.getConnection();
