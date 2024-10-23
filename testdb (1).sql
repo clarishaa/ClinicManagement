@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 23, 2024 at 06:17 AM
+-- Generation Time: Oct 23, 2024 at 06:38 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -67,6 +67,13 @@ CREATE TABLE `treatments` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `treatments`
+--
+
+INSERT INTO `treatments` (`id`, `user_id`, `treatment_type`, `treatment_date`, `notes`, `created_at`) VALUES
+(1, 10, 'asdfghjk', '2024-10-23', 'xcvbhjkl', '2024-10-23 06:18:45');
+
 -- --------------------------------------------------------
 
 --
@@ -92,7 +99,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `user_type`, `first_name`, `last_name`, `gender`, `birthdate`) VALUES
 (5, 'admin', 'admin@gmail.com', 'admin', 'admin', NULL, NULL, NULL, NULL),
 (10, NULL, NULL, NULL, 'patient', 'Clarish', 'Jabonillo', 'Female', '2025-10-23'),
-(13, NULL, NULL, NULL, 'patient', 'ccc', 'nnnnn', 'Male', '2024-10-23');
+(13, NULL, NULL, NULL, 'patient', 'ccc', 'nnnnn', 'Male', '2024-10-23'),
+(14, NULL, NULL, NULL, 'patient', 'Clarish', 'Oli', 'Female', '2002-08-29');
 
 --
 -- Indexes for dumped tables
@@ -143,13 +151,13 @@ ALTER TABLE `bills`
 -- AUTO_INCREMENT for table `treatments`
 --
 ALTER TABLE `treatments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- Constraints for dumped tables
