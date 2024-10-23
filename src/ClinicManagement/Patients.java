@@ -61,6 +61,16 @@ public class Patients extends JFrame {
         JButton deleteButton = new JButton("Delete Patient");
         deleteButton.addActionListener(e -> deleteSelectedPatient());
         buttonPanel.add(deleteButton);
+        
+        JButton deleteButton_1 = new JButton("Dashboard");
+        deleteButton_1.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		Main main = new Main();
+        		main .setVisible(true);
+
+        	}
+        });
+        buttonPanel.add(deleteButton_1);
     }
 
     // Load patient data from the database
