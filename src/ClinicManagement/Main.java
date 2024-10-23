@@ -73,6 +73,12 @@ public class Main extends JFrame {
         	}
         });
         JButton btnTreatments = new JButton("Treatments");
+        btnTreatments.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		Treatments treatment = new Treatments();
+        		treatment .setVisible(true);
+        	}
+        });
         JButton btnBilling = new JButton("Billing");
         JButton btnReports = new JButton("Reports");
         JButton btnSettings = new JButton("Settings");

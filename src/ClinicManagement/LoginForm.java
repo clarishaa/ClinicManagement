@@ -173,7 +173,7 @@ public class LoginForm extends JFrame {
         if (userType != -1) {
             JOptionPane.showMessageDialog(this, "Login successful!", "Welcome", JOptionPane.INFORMATION_MESSAGE);
             if (userType == 1) {
-                openAppointmentManagementSystem();
+                Main();
             } else {
                 openAppointmentBookingForm();
             }
@@ -213,10 +213,10 @@ public class LoginForm extends JFrame {
         });
     }
     
-    private void openAppointmentManagementSystem() {
+    private void Main() {
         SwingUtilities.invokeLater(() -> {
-            AppointmentManagementSystem ams = new AppointmentManagementSystem();
-            ams.setVisible(true);
+            Main main = new Main();
+            main.setVisible(true);
             this.dispose(); // Close the login form
         });
     }
