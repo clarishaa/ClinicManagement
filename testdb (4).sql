@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 23, 2024 at 03:03 PM
+-- Generation Time: Oct 24, 2024 at 07:38 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -52,16 +52,6 @@ CREATE TABLE `billing` (
   `status` enum('paid','pending','canceled') NOT NULL DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `billing`
---
-
-INSERT INTO `billing` (`id`, `treatment_id`, `amount`, `billing_date`, `status`) VALUES
-(1, 13, 200.00, '2024-10-22 16:00:00', 'paid'),
-(2, 15, 100.00, '2024-10-23 14:04:22', 'pending'),
-(3, 16, 200.00, '2024-10-23 14:13:04', 'pending'),
-(4, 17, 400.00, '2024-10-23 14:28:06', 'pending');
-
 -- --------------------------------------------------------
 
 --
@@ -79,6 +69,45 @@ CREATE TABLE `bills` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `dental_inventory`
+--
+
+CREATE TABLE `dental_inventory` (
+  `item_id` int NOT NULL,
+  `item_name` varchar(255) NOT NULL,
+  `quantity` int NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `dental_inventory`
+--
+
+INSERT INTO `dental_inventory` (`item_id`, `item_name`, `quantity`, `unit_price`) VALUES
+(1, 'Toothbrush', 100, 1.50),
+(2, 'Toothpaste', 200, 2.00),
+(3, 'Dental Floss', 150, 1.25),
+(4, 'Mouthwash', 75, 3.00),
+(5, 'Dental Mirror', 50, 2.50),
+(6, 'Syringe', 120, 0.75),
+(7, 'Dental Scalpel', 30, 4.00),
+(8, 'Anesthetic Gel', 60, 5.00),
+(9, 'Dental X-Ray Film', 80, 2.75),
+(10, 'Extraction Forceps', 25, 10.00),
+(11, 'Composite Filling Material', 40, 15.00),
+(12, 'Orthodontic Brackets', 100, 0.50),
+(13, 'Cavity Filling Cement', 60, 3.50),
+(14, 'Whitening Strips', 90, 7.00),
+(15, 'Disposable Gloves', 500, 0.10),
+(16, 'Face Masks', 200, 0.15),
+(17, 'Dental Apron', 100, 0.20),
+(18, 'Plaque Disclosing Solution', 50, 2.00),
+(19, 'Fluoride Treatment Solution', 40, 8.00),
+(20, 'Cotton Rolls', 300, 0.05);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `inventory`
 --
 
@@ -88,14 +117,6 @@ CREATE TABLE `inventory` (
   `quantity` int NOT NULL,
   `unit_price` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `inventory`
---
-
-INSERT INTO `inventory` (`item_id`, `item_name`, `quantity`, `unit_price`) VALUES
-(1, 'Chair', 888, 888.00),
-(4, 'gfcdx', 22, 233.00);
 
 -- --------------------------------------------------------
 
@@ -111,25 +132,6 @@ CREATE TABLE `treatments` (
   `notes` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `treatments`
---
-
-INSERT INTO `treatments` (`id`, `user_id`, `treatment_type`, `treatment_date`, `notes`, `created_at`) VALUES
-(2, 10, 'Teeth Cleaning', '2024-10-23', 'cvbnm,', '2024-10-23 10:42:36'),
-(4, 10, 'Checkup', '2024-10-23', 'fghjkl', '2024-10-23 10:47:07'),
-(5, 10, 'Checkup', '2024-10-23', 'fghjk', '2024-10-23 10:53:02'),
-(7, 10, 'Checkup', '2024-10-23', 'dcfvgbhnjmk,', '2024-10-23 11:03:41'),
-(8, 10, 'Teeth Cleaning', '2024-10-23', 'cvbnm,', '2024-10-23 11:11:29'),
-(9, 10, 'Teeth Cleaning', '2024-10-23', 'cvbnm,', '2024-10-23 11:11:37'),
-(10, 13, 'Treatment C', '2024-10-23', 'hgfd', '2024-10-23 12:08:23'),
-(12, 10, 'vbnm,', '2024-10-23', 'nbbbbbbb', '2024-10-23 12:46:05'),
-(13, 10, 'Cleaning', '2024-10-23', 'cvbnm', '2024-10-23 13:55:42'),
-(14, 10, 'Filling', '2024-10-23', 'bnmkl', '2024-10-23 14:03:28'),
-(15, 10, 'Consultation', '2024-10-23', 'vbnjmk,', '2024-10-23 14:04:22'),
-(16, 13, 'Cleaning', '2024-10-23', 'xz', '2024-10-23 14:13:04'),
-(17, 10, 'Extraction', '2024-10-23', 'cvbnm,', '2024-10-23 14:28:06');
 
 -- --------------------------------------------------------
 
@@ -183,6 +185,12 @@ ALTER TABLE `bills`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `dental_inventory`
+--
+ALTER TABLE `dental_inventory`
+  ADD PRIMARY KEY (`item_id`);
+
+--
 -- Indexes for table `inventory`
 --
 ALTER TABLE `inventory`
@@ -215,13 +223,19 @@ ALTER TABLE `appointments`
 -- AUTO_INCREMENT for table `billing`
 --
 ALTER TABLE `billing`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `bills`
 --
 ALTER TABLE `bills`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `dental_inventory`
+--
+ALTER TABLE `dental_inventory`
+  MODIFY `item_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `inventory`
@@ -233,7 +247,7 @@ ALTER TABLE `inventory`
 -- AUTO_INCREMENT for table `treatments`
 --
 ALTER TABLE `treatments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `users`

@@ -40,15 +40,12 @@ public class Inventory extends JFrame {
         contentPane.setLayout(new BorderLayout());
         setLocationRelativeTo(null);
 
-        // Create table model
         tableModel = new DefaultTableModel(new Object[]{"Item ID", "Item Name", "Quantity", "Unit Price"}, 0);
         table = new JTable(tableModel);
         contentPane.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Load data from the database
         loadData();
 
-        // Create a panel for buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
         contentPane.add(buttonPanel, BorderLayout.SOUTH);
@@ -69,14 +66,13 @@ public class Inventory extends JFrame {
         dashboardButton.addActionListener(e -> {
             Main main = new Main();
             main.setVisible(true);
-            this.dispose(); // Close the inventory window
+            this.dispose();
         });
         buttonPanel.add(dashboardButton);
     }
 
-    // Load inventory data from the database
     private void loadData() {
-        String query = "SELECT * FROM inventory"; // Adjust query as needed
+        String query = "SELECT * FROM inventory";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -95,15 +91,13 @@ public class Inventory extends JFrame {
         }
     }
 
-    // Show the dialog for adding or editing an inventory item
     private void showItemDialog(Item item) {
-        JDialog dialog = new JDialog(this, item == null ? "Add Item" : "Edit Item", true); // Make it modal
+        JDialog dialog = new JDialog(this, item == null ? "Add Item" : "Edit Item", true);
         dialog.getContentPane().setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Input fields
         JTextField itemNameField = new JTextField(20);
         JFormattedTextField quantityField = new JFormattedTextField(createIntegerFormatter());
         JFormattedTextField unitPriceField = new JFormattedTextField(createDecimalFormatter());
@@ -114,7 +108,6 @@ public class Inventory extends JFrame {
             unitPriceField.setValue(item.getUnitPrice());
         }
 
-        // Adding components to the dialog
         gbc.gridx = 0; gbc.gridy = 0; dialog.getContentPane().add(new JLabel("Item Name:"), gbc);
         gbc.gridx = 1; dialog.getContentPane().add(itemNameField, gbc);
         gbc.gridx = 0; gbc.gridy = 1; dialog.getContentPane().add(new JLabel("Quantity:"), gbc);
@@ -143,7 +136,7 @@ public class Inventory extends JFrame {
             } else {
                 updateItem(item.getItemId(), itemName, quantity, unitPrice);
             }
-            dialog.dispose(); // Close the dialog
+            dialog.dispose();
         });
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
@@ -151,39 +144,32 @@ public class Inventory extends JFrame {
 
         dialog.pack();
         dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true); // Show the dialog
+        dialog.setVisible(true);
     }
 
-    // Create a NumberFormatter for integer input (quantity)
     private NumberFormatter createIntegerFormatter() {
         NumberFormatter formatter = new NumberFormatter(NumberFormat.getIntegerInstance());
         formatter.setValueClass(Integer.class);
-        formatter.setAllowsInvalid(false); // Prevent invalid input
+        formatter.setAllowsInvalid(false);
         formatter.setCommitsOnValidEdit(true);
         return formatter;
     }
 
-    // Create a NumberFormatter for decimal input (unit price)
     private NumberFormatter createDecimalFormatter() {
-        // Create a decimal format allowing for two decimal places
         DecimalFormat decimalFormat = new DecimalFormat("#0.00");
         NumberFormatter formatter = new NumberFormatter(decimalFormat);
         
-        // Use Double for value class instead of Integer
         formatter.setValueClass(Double.class);
         
-        // Allow for invalid input temporarily while typing
         formatter.setAllowsInvalid(true);
-        formatter.setCommitsOnValidEdit(true); // Commit the value when valid
+        formatter.setCommitsOnValidEdit(true);
 
-        // Optional: set a minimum value if required
-        formatter.setMinimum(0.0); // Prevent negative values for unit price
+        formatter.setMinimum(0.0);
 
         return formatter;
     }
 
 
-    // Add a new item to the database
     private void addItem(String itemName, int quantity, double unitPrice) {
         String query = "INSERT INTO inventory (item_name, quantity, unit_price) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -193,14 +179,13 @@ public class Inventory extends JFrame {
             pstmt.setInt(2, quantity);
             pstmt.setDouble(3, unitPrice);
             pstmt.executeUpdate();
-            loadData(); // Refresh table data
+            loadData();
             showInfo("Item added successfully!");
         } catch (SQLException e) {
             showError("Failed to add item: " + e.getMessage());
         }
     }
 
-    // Update an existing item in the database
     private void updateItem(int itemId, String itemName, int quantity, double unitPrice) {
         String query = "UPDATE inventory SET item_name = ?, quantity = ?, unit_price = ? WHERE item_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -211,14 +196,13 @@ public class Inventory extends JFrame {
             pstmt.setDouble(3, unitPrice);
             pstmt.setInt(4, itemId);
             pstmt.executeUpdate();
-            loadData(); // Refresh table data
+            loadData(); 
             showInfo("Item updated successfully!");
         } catch (SQLException e) {
             showError("Failed to update item: " + e.getMessage());
         }
     }
 
-    // Delete a selected item from the database
     private void deleteSelectedItem() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow >= 0) {
@@ -229,7 +213,7 @@ public class Inventory extends JFrame {
 
                 pstmt.setInt(1, itemId);
                 pstmt.executeUpdate();
-                loadData(); // Refresh table data
+                loadData();
                 showInfo("Item deleted successfully!");
             } catch (SQLException e) {
                 showError("Failed to delete item: " + e.getMessage());
@@ -239,7 +223,6 @@ public class Inventory extends JFrame {
         }
     }
 
-    // Edit the selected item
     private void editSelectedItem() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow >= 0) {
@@ -247,7 +230,6 @@ public class Inventory extends JFrame {
             String itemName = (String) tableModel.getValueAt(selectedRow, 1);
             int quantity = (int) tableModel.getValueAt(selectedRow, 2);
 
-            // Correctly retrieve the unit price as a BigDecimal
             BigDecimal unitPrice = (BigDecimal) tableModel.getValueAt(selectedRow, 3);
             showItemDialog(new Item(itemId, itemName, quantity, unitPrice.doubleValue()));
         } else {
@@ -255,18 +237,15 @@ public class Inventory extends JFrame {
         }
     }
 
-    // Show error message dialog
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    // Show info message dialog
     private void showInfo(String message) {
         JOptionPane.showMessageDialog(this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 }
 
-// Item class (you might have this already defined)
 class Item {
     private int itemId;
     private String itemName;

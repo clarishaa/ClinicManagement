@@ -31,7 +31,6 @@ public class Main extends JFrame {
      * Create the frame.
      */
     public Main() {
-        // Frame setup
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 1169, 806);
         contentPane = new JPanel();
@@ -39,11 +38,11 @@ public class Main extends JFrame {
         contentPane.setLayout(new BorderLayout(0, 0));
         setContentPane(contentPane);
         setLocationRelativeTo(null);
+        setIconImage(new ImageIcon(getClass().getResource("/ClinicManagement/icons (6).png")).getImage());
 
-        // Top Panel (Logo)
         JPanel topPanel = new JPanel();
         topPanel.setForeground(new Color(255, 255, 255));
-        topPanel.setBackground(new Color(0, 64, 128));  // Dark blue background
+        topPanel.setBackground(new Color(0, 64, 128));
         contentPane.add(topPanel, BorderLayout.NORTH);
 
         JLabel logoLabel = new JLabel("Dental Clinic Management");
@@ -51,13 +50,11 @@ public class Main extends JFrame {
         logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
         topPanel.add(logoLabel);
 
-        // Main Dashboard Panel
         JPanel dashboardPanel = new JPanel();
-        dashboardPanel.setLayout(new GridLayout(2, 3, 20, 20)); // 2 rows, 3 columns with padding
-        dashboardPanel.setBorder(new EmptyBorder(30, 30, 30, 30)); // Padding around the buttons
+        dashboardPanel.setLayout(new GridLayout(2, 3, 20, 20));
+        dashboardPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
         contentPane.add(dashboardPanel, BorderLayout.CENTER);
 
-        // Minimalist buttons for the main features
         JButton btnAppointments = new JButton("");
         btnAppointments.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAppointments.setPreferredSize(new Dimension(500, 500));
@@ -66,9 +63,8 @@ public class Main extends JFrame {
         btnAppointments.setToolTipText("Manage Appointments");
         btnAppointments.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                // Create an instance of AppointmentManagementSystem
                 AppointmentManagementSystem appointmentSystem = new AppointmentManagementSystem();
-                appointmentSystem.setVisible(true); // Show the Appointment Management System
+                appointmentSystem.setVisible(true);
             }
         });
 
@@ -82,20 +78,20 @@ public class Main extends JFrame {
         btnPatients.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Patients patient = new Patients();
-                patient.setVisible(true); // Show the Patients Management System
+                patient.setVisible(true);
             }
         });
 
         JButton btnTreatments = new JButton("");
         btnTreatments.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnTreatments.setHorizontalTextPosition(SwingConstants.CENTER);
-        btnTreatments.setIcon(new ImageIcon(Main.class.getResource("/ClinicManagement/icons (2).png")));
+        btnTreatments.setIcon(new ImageIcon(Main.class.getResource("/ClinicManagement/6.png")));
         btnTreatments.setPreferredSize(new Dimension(500, 500));
         btnTreatments.setToolTipText("Manage Treatments");
         btnTreatments.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Treatments treatment = new Treatments();
-                treatment.setVisible(true); // Show the Treatments Management System
+                treatment.setVisible(true);
             }
         });
 
@@ -107,24 +103,30 @@ public class Main extends JFrame {
         btnInventory.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Inventory inventory = new Inventory();
-                inventory.setVisible(true); // Show the Inventory Management System
+                inventory.setVisible(true);
             }
         });
 
         JButton btnBilling = new JButton("");
+        btnBilling.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		Billing billing = new Billing();
+                billing.setVisible(true);
+        	}
+        });
         btnBilling.setIcon(new ImageIcon(Main.class.getResource("/ClinicManagement/icons (5).png")));
         btnBilling.setToolTipText("Manage Billing");
         btnBilling.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnBilling.setPreferredSize(new Dimension(500, 500));
 
-        JButton btnReports = new JButton("");
-        btnReports.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnReports.setToolTipText("View Reports");
-        btnReports.setPreferredSize(new Dimension(500, 500));
+        JButton btnLogout = new JButton("");
+        btnLogout.setIcon(new ImageIcon(Main.class.getResource("/ClinicManagement/9.png")));
+        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnLogout.setToolTipText("Logout");
+        btnLogout.setPreferredSize(new Dimension(500, 500));
 
-        // Style the buttons (Minimalist look)
         Font buttonFont = new Font("Arial", Font.PLAIN, 18);
-        Color buttonColor = new Color(240, 240, 240); // Light gray button background
+        Color buttonColor = new Color(240, 240, 240);
 
         btnAppointments.setFont(buttonFont);
         btnAppointments.setBackground(buttonColor);
@@ -136,16 +138,15 @@ public class Main extends JFrame {
         btnInventory.setBackground(buttonColor);
         btnBilling.setFont(buttonFont);
         btnBilling.setBackground(buttonColor);
-        btnReports.setFont(buttonFont);
-        btnReports.setBackground(buttonColor);
+        btnLogout.setFont(buttonFont);
+        btnLogout.setBackground(buttonColor);
 
-        // Add buttons to the dashboard
         dashboardPanel.add(btnAppointments);
         dashboardPanel.add(btnPatients);
         dashboardPanel.add(btnTreatments);
         dashboardPanel.add(btnInventory);
         dashboardPanel.add(btnBilling);
-        dashboardPanel.add(btnReports);
+        dashboardPanel.add(btnLogout);
     }
 
   

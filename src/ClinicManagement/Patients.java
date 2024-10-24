@@ -36,15 +36,12 @@ public class Patients extends JFrame {
         setContentPane(contentPane);
         contentPane.setLayout(new BorderLayout());
         setLocationRelativeTo(null);
-        // Create table model
         tableModel = new DefaultTableModel(new Object[]{"ID", "First Name", "Last Name", "Gender", "Birthdate"}, 0);
         table = new JTable(tableModel);
         contentPane.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Load data from the database
         loadData();
 
-        // Create a panel for buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
         contentPane.add(buttonPanel, BorderLayout.SOUTH);
@@ -73,7 +70,6 @@ public class Patients extends JFrame {
         buttonPanel.add(deleteButton_1);
     }
 
-    // Load patient data from the database
     private void loadData() {
         String query = "SELECT * FROM users WHERE user_type = 'patient'";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -95,35 +91,30 @@ public class Patients extends JFrame {
         }
     }
 
-    // Show the dialog for adding or editing a patient
     private void showPatientDialog(Patient patient) {
         JDialog dialog = new JDialog(this, patient == null ? "Add Patient" : "Edit Patient", true);
         dialog.getContentPane().setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(10, 10, 10, 10); // Add padding around components
+        gbc.insets = new Insets(10, 10, 10, 10);
 
         JTextField firstNameField = new JTextField();
         JTextField lastNameField = new JTextField();
 
-        // Gender dropdown
         String[] genders = {"Male", "Female", "Other"};
         JComboBox<String> genderDropdown = new JComboBox<>(genders);
 
-        // Birthdate picker using JSpinner
         JSpinner birthdateSpinner = new JSpinner(new SpinnerDateModel());
         JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(birthdateSpinner, "yyyy-MM-dd");
         birthdateSpinner.setEditor(dateEditor);
 
-        // Populate fields if editing an existing patient
         if (patient != null) {
             firstNameField.setText(patient.getFirstName());
             lastNameField.setText(patient.getLastName());
             genderDropdown.setSelectedItem(patient.getGender());
-            birthdateSpinner.setValue(patient.getBirthdate()); // Assuming the birthdate is in the correct format
+            birthdateSpinner.setValue(patient.getBirthdate());
         }
 
-        // Add components to dialog with GridBagLayout
         gbc.gridx = 0; gbc.gridy = 0; dialog.getContentPane().add(new JLabel("First Name:"), gbc);
         gbc.gridx = 1; dialog.getContentPane().add(firstNameField, gbc);
         
@@ -143,10 +134,9 @@ public class Patients extends JFrame {
             String selectedGender = (String) genderDropdown.getSelectedItem();
             String birthdate = new SimpleDateFormat("yyyy-MM-dd").format(birthdateSpinner.getValue());
 
-            // Check for empty fields
             if (firstName.isEmpty() || lastName.isEmpty() || selectedGender == null || birthdate.isEmpty()) {
                 showError("All fields are required! Please fill in all fields.");
-                return; // Exit the method if validation fails
+                return;
             }
 
             if (patient == null) {
@@ -157,8 +147,7 @@ public class Patients extends JFrame {
             dialog.dispose();
         });
 
-        // Add the save button at the bottom of the dialog
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER; // Center the button
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
         dialog.getContentPane().add(saveButton, gbc);
 
         dialog.pack();
@@ -166,7 +155,6 @@ public class Patients extends JFrame {
         dialog.setVisible(true);
     }
 
-    // Add a new patient to the database
     private void addPatient(String firstName, String lastName, String gender, String birthdate) {
         String query = "INSERT INTO users (first_name, last_name, gender, birthdate, user_type) VALUES (?, ?, ?, ?, 'patient')";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -177,14 +165,13 @@ public class Patients extends JFrame {
             pstmt.setString(3, gender);
             pstmt.setDate(4, java.sql.Date.valueOf(birthdate));
             pstmt.executeUpdate();
-            loadData(); // Refresh table data
+            loadData();
             showInfo("Patient added successfully!");
         } catch (SQLException e) {
             showError("Failed to add patient: " + e.getMessage());
         }
     }
 
-    // Update an existing patient in the database
     private void updatePatient(int id, String firstName, String lastName, String gender, String birthdate) {
         String query = "UPDATE users SET first_name = ?, last_name = ?, gender = ?, birthdate = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -196,14 +183,13 @@ public class Patients extends JFrame {
             pstmt.setDate(4, java.sql.Date.valueOf(birthdate));
             pstmt.setInt(5, id);
             pstmt.executeUpdate();
-            loadData(); // Refresh table data
+            loadData();
             showInfo("Patient updated successfully!");
         } catch (SQLException e) {
             showError("Failed to update patient: " + e.getMessage());
         }
     }
 
-    // Delete a selected patient from the database
     private void deleteSelectedPatient() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow >= 0) {
@@ -214,7 +200,7 @@ public class Patients extends JFrame {
 
                 pstmt.setInt(1, id);
                 pstmt.executeUpdate();
-                loadData(); // Refresh table data
+                loadData();
                 showInfo("Patient deleted successfully!");
             } catch (SQLException e) {
                 showError("Failed to delete patient: " + e.getMessage());
@@ -224,7 +210,6 @@ public class Patients extends JFrame {
         }
     }
 
-    // Edit the selected patient
     private void editSelectedPatient() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow >= 0) {
@@ -239,17 +224,14 @@ public class Patients extends JFrame {
         }
     }
 
-    // Show informational message
     private void showInfo(String message) {
         JOptionPane.showMessageDialog(this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Show error message
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    // Patient model class
     private class Patient {
         private int id;
         private String firstName;
